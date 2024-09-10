@@ -10,7 +10,7 @@ function change_conda {
 }
 
 # Define directory holding the git repos
-git_dir="$HOME/Desktop/git/"
+git_dir="$HOME/git/"
 
 #Identify all likely dir in the git_dir
 find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read dir; do
