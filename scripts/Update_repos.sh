@@ -1,19 +1,20 @@
 #!/bin/bash
-
+# NOMADS repos update script
+# Written by Daniel Bridges (dbscientificltd@gmail.com)
 
 function change_conda {
     #Use absolute path in case being run in crontab
     source $HOME/.miniforge/etc/profile.d/conda.sh
-#     set +eu
+    #     set +eu
     conda activate $1
 }
-
 
 # Define directory holding the git repos
 git_dir="$HOME/Desktop/git/"
 
 #Identify all likely dir in the git_dir
 find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read dir; do
+
     #test if it is a git repo
     if ! [[ -d "$dir/.git" ]]; then
         continue
@@ -34,7 +35,7 @@ find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read d
     fi
 
     #Finish with those that are up to date
-    if [[ "$output" == "Alreadyup to date." ]]; then
+    if [[ "$output" == "Already up to date." ]]; then
         echo "   $output"
         continue
     fi
@@ -53,16 +54,13 @@ find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read d
         continue
     fi
     #Check environment exists
-    env_present=`conda info --envs | grep warehouse | wc -l`
+    env_present=$(conda info --envs | grep warehouse | wc -l)
     if [[ $env_present -eq "1" ]]; then
         #Change into the env
         change_conda "$repo"
-        $repo --version
-        # Execute the pip command (assuming you have pip installed)
         pip install -e .
     else
         echo "$repo not installed. Please install and then re-run this script"
     fi
-
 
 done
