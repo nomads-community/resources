@@ -10,15 +10,63 @@ function change_conda {
     conda activate $1
 }
 
+function change_git_origin_between_https_ssh {
+    # Validate input argument
+    if [[ ! "$1" =~ ^(https|ssh)$ ]]; then
+        echo "Error: Invalid argument. Please provide 'https' or 'ssh'."
+        return 1
+    fi
+
+    CURRENT=$(git remote get-url origin | awk -F'[://@]' '{print $1}' | sed s/git/ssh/)
+    GITSTUB=$(git remote get-url origin | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://' | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://')
+    #     echo "current: $CURRENT args: $1"
+    #Remove those that match
+    if [[ "$CURRENT" = "$1" ]]; then
+        return
+    fi
+
+    #Change as required
+    if [[ "$1" = "https" ]]; then
+        echo "   Changing to https origin"
+        git remote set-url origin https://github.com/$GITSTUB
+    elif [[ "$1" = "ssh" ]]; then
+        echo "   Changing to ssh origin"
+        git remote set-url origin git@github.com:$GITSTUB
+    else
+        echo "unknown git origin "
+    fi
+
+}
+
 # Define directory holding the git repos
 git_dir="$HOME/git/"
 
+# Parse command-line arguments
+while getopts ":g:o" opt; do
+    case $opt in
+    o) change_origin=true ;;
+    g) git_dir="$OPTARG" ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+    esac
+done
+
+# Shift away processed options from remaining arguments
+shift $((OPTIND - 1))
+
 #Identify all likely dir in the git_dir
 find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read dir; do
-
+    echo $dir
     #test if it is a git repo
     if ! [[ -d "$dir/.git" ]]; then
         continue
+    fi
+
+    #Ensure that it is using an https
+    if [[ $change_origin = "true" ]]; then
+        change_git_origin_between_https_ssh https
     fi
 
     repo=$(basename "$dir")
