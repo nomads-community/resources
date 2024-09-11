@@ -2,10 +2,11 @@
 # NOMADS repos update script
 # Written by Daniel Bridges (dbscientificltd@gmail.com)
 
+condabase=$(conda info --all | grep "base environment" | sed s/"base environment : "// | sed s/\(writable\)// | sed s/\s+//)
+
 function change_conda {
-    #Use absolute path in case being run in crontab
-    source $HOME/.miniforge/etc/profile.d/conda.sh
-    #     set +eu
+    #source the conda executable
+    source $condabase/etc/profile.d/conda.sh
     conda activate $1
 }
 
