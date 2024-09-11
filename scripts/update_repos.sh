@@ -58,20 +58,20 @@ shift $((OPTIND - 1))
 
 #Identify all likely dir in the git_dir
 find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read dir; do
-    echo $dir
+
     #test if it is a git repo
     if ! [[ -d "$dir/.git" ]]; then
         continue
     fi
 
+    repo=$(basename "$dir")
+    echo "Attempting to update $repo"
+    cd $dir
+
     #Ensure that it is using an https
     if [[ $change_origin = "true" ]]; then
         change_git_origin_between_https_ssh https
     fi
-
-    repo=$(basename "$dir")
-    echo "Attempting to update $repo"
-    cd $dir
 
     output=$(git pull)
     status=$?
