@@ -8,6 +8,11 @@ function change_conda {
     #source the conda executable
     source $condabase/etc/profile.d/conda.sh
     conda activate $1
+
+    if [[ $CONDA_DEFAULT_ENV != $1 ]]; then
+        echo "Failed to enter correct conda env"
+        exit
+    fi
 }
 
 function change_git_origin_between_https_ssh {
@@ -19,7 +24,7 @@ function change_git_origin_between_https_ssh {
 
     CURRENT=$(git remote get-url origin | awk -F'[://@]' '{print $1}' | sed s/git/ssh/)
     GITSTUB=$(git remote get-url origin | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://' | sed 's/https:\/\/github.com\///' | sed 's/git@github.com://')
-    #     echo "current: $CURRENT args: $1"
+    #echo "current: $CURRENT args: $1"
     #Remove those that match
     if [[ "$CURRENT" = "$1" ]]; then
         return
@@ -107,7 +112,7 @@ find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read d
     if [[ $env_present -eq "1" ]]; then
         #Change into the env
         change_conda "$repo"
-        pip install -e .
+        #pip install -e .
     else
         echo "$repo not installed. Please install and then re-run this script"
     fi
