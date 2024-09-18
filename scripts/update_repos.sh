@@ -97,8 +97,11 @@ find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read d
         continue
     fi
 
+    #Some versions print with hyphens, some not
+    Uptodate=$(echo $output | grep -E "Already.*up.*to.*date" | wc -l)
+
     #Finish with those that are up to date
-    if [[ "$output" == "Already up to date." ]]; then
+    if [[ "$Uptodate" = "1" ]]; then
         echo "   $output"
         printf $divider
         continue
