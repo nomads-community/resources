@@ -6,8 +6,23 @@
 condabase="$(conda info --all | grep "base environment" | sed s/"base environment : "// | sed s/\(writable\)// | sed s/\s+//)"
 condapath="/etc/profile.d/conda.sh"
 condash=$(echo $condabase$condapath | sed s/[[:space:]]//)
+VERSION="0.1"
 
 divider="\n\n***************************************\n"
+
+function Help {
+    printf "${RED}##### HELP NOTES: #####${NC}
+   This script will update NOMADS git repositories with git pull, and then try to reinstall any repo specific commands.
+
+   Syntax: $(basename "$0") [-hgo] [DIRECTORY]
+   Version: $VERSION
+
+    Optional args:
+    -h, --help      Print this help
+    -g, --git-dir DIR    Specify the directory containing git repositories (default: $HOME/git/)
+    -o, --change-origin Change origin URL of all repositories to https or ssh\n"
+
+}
 
 function change_conda {
     #source the conda executable
@@ -53,10 +68,17 @@ function change_git_origin_between_https_ssh {
 git_dir="$HOME/git/"
 
 # Parse command-line arguments
-while getopts ":g:o" opt; do
+while getopts ":g:o:h" opt; do
     case $opt in
-    o) change_origin=true ;;
+    o)
+        change_origin=true
+        origin_type="$OPTARG"
+        ;;
     g) git_dir="$OPTARG" ;;
+    h)
+        Help
+        exit
+        ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
         exit 1
@@ -84,7 +106,7 @@ find "$git_dir" -mindepth 1 -maxdepth 1 -type d -not -path '*/.*' | while read d
 
     #Ensure that it is using an https
     if [[ $change_origin = "true" ]]; then
-        change_git_origin_between_https_ssh https
+        change_git_origin_between_https_ssh $origin_type
     fi
 
     output=$(git pull)
