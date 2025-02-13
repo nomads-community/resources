@@ -10,7 +10,7 @@ from resources.lib.general import (
 )
 
 
-@click.command(short_help="Update NOMADS git repositories")
+@click.command(short_help="Update installed NOMADS tool(s)")
 @click.option(
     "-g",
     "--git_folder",
@@ -27,7 +27,7 @@ from resources.lib.general import (
     help="URL type: https or ssh",
 )
 def update(git_folder: Path, url_type: str = None) -> None:
-    """Updates NOMADS git repositories including installing environment variables."""
+    """Updates NOMADS tools including installing environment variables."""
 
     if not git_folder.exists():
         raise FileNotFoundError(f"Directory {git_folder} does not exist.")

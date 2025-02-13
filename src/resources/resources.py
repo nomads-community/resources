@@ -20,7 +20,7 @@ class OrderedGroup(click.Group):
 @click.version_option(message="%(prog)s-v%(version)s")
 def cli():
     """
-    Standardisation, extraction and visualisation of NOMADS experimental and sequencing data
+    Install and maintain NOMADS software tools
 
     """
     pass

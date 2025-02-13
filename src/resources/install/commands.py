@@ -14,7 +14,7 @@ from resources.lib.general import (
 script_dir = Path(__file__).parent.resolve()
 
 
-@click.command(short_help="Select and install NOMADS tools / repositories.")
+@click.command(short_help="Install NOMADS tool(s)")
 @click.option(
     "-n",
     "--name",
@@ -38,7 +38,7 @@ script_dir = Path(__file__).parent.resolve()
     help="Path to git folder to store all repositories",
 )
 def install(name: str, git_folder: Path, list_tools: bool):
-    """Select and install NOMADS tools / repositories."""
+    """Install NOMADS tool(s)"""
 
     # Load repo information from YAML file
     repos_dt = get_repository_dict()
