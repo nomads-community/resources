@@ -1,4 +1,5 @@
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -6,6 +7,9 @@ from pathlib import Path
 import yaml
 
 resource_dir = Path(__file__).parent.parent.resolve()
+
+# Get logging process
+log = logging.getLogger("general")
 
 
 def get_repository_dict() -> dict:
@@ -54,7 +58,7 @@ def change_git_URL(url_to_change_to: str, repo_path: Path) -> bool:
     )
 
     if not current_url.returncode == 0:
-        print(f"Failed to get URL for {repo_path}.")
+        log.info(f"   Failed to get URL for {repo_path}.")
         return False
 
     url = current_url.stdout.strip()
@@ -71,7 +75,7 @@ def change_git_URL(url_to_change_to: str, repo_path: Path) -> bool:
         raise ValueError(f"URL {url} is not in a recognised format.")
 
     if url_type == url_to_change_to:
-        print(f"   Already using {url_type} URL.")
+        log.info(f"   Already using {url_type} URL.")
         return True
 
     # Update the URL
@@ -82,12 +86,12 @@ def change_git_URL(url_to_change_to: str, repo_path: Path) -> bool:
             capture_output=True,
             text=True,
         )
-        print(f"   Converted from {url_type} to {url_to_change_to} URL")
-        print(set_url.stdout)
+        log.info(f"   Converted from {url_type} to {url_to_change_to} URL")
+        log.info(set_url.stdout)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Failed to change URL for {repo_path}.")
-        print(e)
+        log.info(f"   Failed to change URL for {repo_path}.")
+        log.info(e)
         return False
 
 
@@ -114,19 +118,19 @@ def git_clone(repo_url: str, repo_path: Path) -> bool:
             text=True,
             check=True,
         )
-        print(result.stdout)
-        print(f"{repo_path.name} successfully cloned.")
+        log.info(result.stdout)
+        log.info(f"   {repo_path.name} successfully cloned.")
         return True
 
     except subprocess.CalledProcessError as e:
-        print(f"Git clone failed: {e}", file=sys.stderr)
-        print(e.stderr, file=sys.stderr)
+        log.error(f"Git clone failed: {e}")
+        log.error(e.stderr)
         return False
     except FileNotFoundError:
-        print("Git command not found. Is Git installed?", file=sys.stderr)
+        log.error("Git command not found. Is Git installed?")
         return False
     except Exception as e:  # Catch other potential errors
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        log.exception(f"An unexpected error occurred: {e}")
         return False
 
 
@@ -156,7 +160,6 @@ def conda_env_exists(env_name: str) -> bool:
         for env in env_list["envs"]:
             # Normalize the paths to handle differences in how conda reports them
             env_path = env.replace("\\", "/")  # Windows paths can have backslashes
-            print(env_path)
             if (
                 env_path.endswith(env_name)
                 or env_path.endswith(f"/envs/{env_name}")
@@ -166,21 +169,18 @@ def conda_env_exists(env_name: str) -> bool:
         return False
 
     except subprocess.CalledProcessError as e:
-        print(f"Error checking conda environments: {e}", file=sys.stderr)
-        print(e.stderr, file=sys.stderr)
+        log.error(f"   Error checking conda environments: {e}")
+        log.error(e.stderr, file=sys.stderr)
         return False
     except FileNotFoundError:
-        print("Mamba command not found. Is it installed?", file=sys.stderr)
+        log.error("   Mamba command not found. Is it installed?")
         return False
     except json.JSONDecodeError as e:
-        print(f"Error parsing mambas output (invalid JSON): {e}", file=sys.stderr)
-        print(
-            result.stdout if "result" in locals() else "No output to parse",
-            file=sys.stderr,
-        )
+        log.error(f"   Error parsing mambas output (invalid JSON): {e}")
+        log.error(result.stdout if "result" in locals() else "No output to parse")
         return False
     except Exception as e:
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        log.exception(f"   An unexpected error occurred: {e}")
         return False
 
 
@@ -195,14 +195,14 @@ def create_conda_env_from_file(repo_path: Path) -> bool:
     """
     envfile_path = repo_path.joinpath("environments", "run.yml")
     if not envfile_path.exists():
-        print(f"Environment file not found: {envfile_path}", file=sys.stderr)
+        log.info(f"   {envfile_path} file not found", file=sys.stderr)
         return False
 
     mamba = "mamba"
     if sys.platform == "win32":
         mamba_path = r"C:\ProgramData\miniforge3\scripts\mamba.exe"
         if not Path(mamba_path).exists():
-            print(f"Mamba not found in: {mamba_path}", file=sys.stderr)
+            log.info(f"   Mamba not found in: {mamba_path}", file=sys.stderr)
             return False
         mamba = mamba_path
 
@@ -222,24 +222,23 @@ def create_conda_env_from_file(repo_path: Path) -> bool:
         # Get return code after communicate
         return_code = process.returncode
         if return_code == 0:
-            print("Mamba environment created successfully!")
+            log.info(f"   {repo_path.name} env created successfully")
             if stderr:
-                print(f"STDERR (on success): {stderr.strip()}", file=sys.stderr)
+                log.debug(f"   STDERR (on success): {stderr.strip()}")
             return True
         else:
-            print(
-                f"Mamba environment creation failed with return code {return_code}",
-                file=sys.stderr,
+            log.error(
+                f"   {repo_path.name} env creation failed with return code {return_code}"
             )
-            print(f"STDOUT: {stdout.strip()}", file=sys.stderr)
-            print(f"STDERR: {stderr.strip()}", file=sys.stderr)
+            log.error(f"   STDOUT: {stdout.strip()}")
+            log.error(f"   STDERR: {stderr.strip()}")
             return False
 
     except FileNotFoundError:
-        print("Mamba command not found. Is mamba installed?", file=sys.stderr)
+        log.error("Mamba command not found. Is mamba installed?")
         return False
     except Exception as e:
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        log.exception(f"An unexpected error occurred: {e}")
         return False
 
 
@@ -256,15 +255,15 @@ def pip_install_in_env(env_name: str, repo_path: Path) -> bool:
 
     if not conda_env_exists(env_name):
         create_env = input(
-            f"Conda environment '{env_name}' does not exist. Do you want to create it? (y/n): "
+            f"   '{env_name}' environment does not exist. Do you want to create it? (y/n): "
         ).lower()
         if create_env != "y":
-            print("Environment creation declined. Exiting.", file=sys.stderr)
+            log.info("   Environment creation declined. Exiting.")
             return False
         create_conda_env_from_file(repo_path)
 
     try:
-        command = ["conda", "run", "-n", env_name, "pip", "install", "-e", "."]
+        command = ["mamba", "run", "-n", env_name, "pip", "install", "-e", "."]
         shell = sys.platform == "win32"
 
         result = subprocess.run(
@@ -274,18 +273,18 @@ def pip_install_in_env(env_name: str, repo_path: Path) -> bool:
             text=True,
             shell=shell,
         )
-        print(result.stdout)
+        log.debug(result.stdout)
         return True
 
     except subprocess.CalledProcessError as e:
-        print(f"Conda environment activation failed: {e}", file=sys.stderr)
-        print(e.stderr, file=sys.stderr)
+        log.error(f"   Conda environment activation failed: {e}")
+        log.error(e.stderr)
         return False
     except FileNotFoundError:
-        print("Conda command not found. Is conda installed?", file=sys.stderr)
+        log.error("   Conda command not found. Is conda installed?")
         return False
     except Exception as e:
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        log.exception(f"   An unexpected error occurred: {e}")
         return False
 
 
@@ -300,12 +299,12 @@ def git_pull(repo_path: Path) -> bool:
     """
     # Check it is a git repo
     if not repo_path.is_dir():
-        print(f"Repository path is not a directory: {repo_path}", file=sys.stderr)
+        log.info(f"   {repo_path} is not a directory:")
         return False
 
     # Check not .git directory
     if not (repo_path / ".git").is_dir():
-        print(f"Not a Git repository: {repo_path}", file=sys.stderr)
+        log.info(f"Not a Git repository: {repo_path}")
         return False
 
     try:
@@ -318,7 +317,7 @@ def git_pull(repo_path: Path) -> bool:
             check=True,
         )
 
-        print(result.stdout)
+        log.info(result.stdout)
 
         if "Already up to date" in result.stdout:
             return True, False
@@ -326,12 +325,40 @@ def git_pull(repo_path: Path) -> bool:
             return True, True
 
     except subprocess.CalledProcessError as e:
-        print(f"Git pull failed: {e}", file=sys.stderr)
-        print(e.stderr, file=sys.stderr)
+        log.error(f"   Git pull failed: {e}")
+        log.error(e.stderr)
         return False
     except FileNotFoundError:
-        print("Git command not found. Is Git installed?", file=sys.stderr)
+        log.error("   Git command not found. Is Git installed?")
         return False
     except Exception as e:
-        print(f"An unexpected error occurred: {e}", file=sys.stderr)
+        log.exception(f"   An unexpected error occurred: {e}")
         return False
+
+
+def produce_dir(*args, verbose: bool = True) -> Path:
+    """
+    Produce a new directory by concatenating `args`,
+    if it does not already exist
+
+    params
+        *args: str1, str2, str3 ...
+            Comma-separated strings which will
+            be combined to produce the directory,
+            e.g. str1/str2/str3
+
+    returns
+        dir: Path to directory name created from *args.
+
+    """
+
+    # Define directory path
+    dir = Path(*args)
+
+    # Create if doesn't exist
+    if not dir.exists():
+        dir.mkdir(parents=True, exist_ok=False)
+        if verbose:
+            log.info(f"   {dir.absolute()} created")
+
+    return dir

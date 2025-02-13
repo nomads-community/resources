@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import click
@@ -10,6 +11,7 @@ from resources.lib.general import (
     list_repository_details,
     pip_install_in_env,
 )
+from resources.lib.logging import divider, identify_cli_command
 
 script_dir = Path(__file__).parent.resolve()
 
@@ -40,6 +42,11 @@ script_dir = Path(__file__).parent.resolve()
 def install(name: str, git_folder: Path, list_tools: bool):
     """Install NOMADS tool(s)"""
 
+    # Set up child log
+    log = logging.getLogger("install_commands")
+    log.info(divider)
+    log.debug(identify_cli_command())
+
     # Load repo information from YAML file
     repos_dt = get_repository_dict()
 
@@ -54,9 +61,11 @@ def install(name: str, git_folder: Path, list_tools: bool):
 
     for repo in name:
         repo = repo.lower()
+        log.info(f"Attempting to install environment {repo}")
+
         if repo not in repos_dt:
-            print(f"{repo} is not a valid NOMADS tool name.")
-            print("")
+            log.info(f"{repo} is not a valid NOMADS tool name.")
+            log.info(divider)
             list_repository_details(list_tools, repos_dt)
         git_target = git_folder / repo
         git_dt = repos_dt.get(repo)
@@ -66,24 +75,29 @@ def install(name: str, git_folder: Path, list_tools: bool):
         if not git_target.exists():
             git_clone(git_url, git_target)
         else:
-            print(f"{repo} folder present in {git_folder}")
+            log.info(f"   {repo} folder present in {git_folder}")
 
         # Check if it should have its own conda env
         if not git_dt.get("conda", False):
-            print(f"{repo} does not require a conda environment. Skipping...")
+            log.info(f"   {repo} does not require a conda environment. Skipping...")
+            log.info(divider)
             continue
 
         # Install environment
         if conda_env_exists(repo):
-            print(f"{repo} environment found. Skipping...")
+            log.info(f"   {repo} environment found. Skipping...")
+            log.info(divider)
             continue
-        print(f"Attempting to install environment {repo}")
+        log.info(f"   installing {repo}")
         created = create_conda_env_from_file(git_target)
         if not created:
-            print(f"Error creating environment {repo}")
+            log.info(f"Error creating environment {repo}")
+            log.info(divider)
             continue
 
         # Install local variables
         if not git_dt.get("pip", False):
+            log.info(divider)
             continue
         pip_install_in_env(repo, git_target)
+        log.info(divider)

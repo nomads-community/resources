@@ -1,9 +1,16 @@
 from collections import OrderedDict
+from pathlib import Path
 
 import click
 
 from resources.install.commands import install
+from resources.lib.logging import config_root_logger
 from resources.update.commands import update
+
+# Configure logging before subcommand execution
+resources_dir = Path(__file__).parent.parent.parent.resolve()
+log_dir = resources_dir / "logs"
+config_root_logger(log_dir=log_dir, verbose=False)
 
 
 class OrderedGroup(click.Group):
