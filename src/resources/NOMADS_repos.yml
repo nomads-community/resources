@@ -1,0 +1,32 @@
+# List of NOMADS repository details
+
+multiply:
+  url: https://github.com/JasonAHendry/multiply
+  blurb: Multiplex PCR design, in silico
+  conda: True
+  pip: True
+nomadic:
+  url: https://github.com/JasonAHendry/nomadic
+  blurb:  Real-time mapping and analysis of amplicon-based nanopore sequencing
+  conda: True
+  pip: True
+resources:
+  url: https://github.com/nomads-community/resources
+  blurb: General NOMADS resources that are not specific to a single tool
+  conda: True
+  pip: True
+bioinformatics:
+  url: https://github.com/nomads-community/bioinformatics
+  blurb: NOMADS bioinformatic resources for training
+  conda: False
+  pip: False
+savanna: 
+  url: https://github.com/JasonAHendry/savanna
+  blurb: Comprehensive analysis of targeted nanopore data
+  conda: True
+  pip: True
+warehouse: 
+  url: https://github.com/nomads-community/warehouse
+  blurb: Standardised NOMADS data generation and storage
+  conda: True
+  pip: True
