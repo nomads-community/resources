@@ -1,0 +1,14 @@
+name: nomadic
+channels:
+  - conda-forge
+  - bioconda
+  
+dependencies:
+  - python
+  - dash
+  - pandas
+  - numpy
+  - scipy
+  - seaborn
+  - click
+  - pip
