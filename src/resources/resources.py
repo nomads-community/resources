@@ -5,6 +5,7 @@ import click
 
 from resources.install.commands import install
 from resources.lib.logging import config_root_logger
+from resources.mklinks.mklinks import mklinks
 from resources.update.commands import update
 
 # Configure logging before subcommand execution
@@ -39,6 +40,7 @@ def cli():
 
 cli.add_command(install)
 cli.add_command(update)
+cli.add_command(mklinks)
 
 
 if __name__ == "__main__":
