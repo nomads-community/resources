@@ -1,10 +1,14 @@
+import os
 import re
+import shutil
 from pathlib import Path
 
 import click
 
 
-@click.command(short_help="Create symbolic links for nomadic entries")
+@click.command(
+    short_help="Move or link data from shared GDrive folder to the nomadic results folder for local viewing"
+)
 @click.option(
     "-g",
     "--shared_gdrive_path",
@@ -12,13 +16,10 @@ import click
     required=False,
     help="Path to the GDrive shared sequence data folder",
 )
-def mklinks(shared_gdrive_path: Path) -> None:
-    """Creates symbolic links for nomadic entries in the shared GDrive path."""
-
-    # Set up child log
-    # log = logging.getLogger("mklinks")
-    # log.info(divider)
-    # log.debug(identify_cli_command())
+def nomadic(shared_gdrive_path: Path) -> None:
+    """
+    Move or link data from shared GDrive folder to the nomadic results folder for local viewing
+    """
 
     if not shared_gdrive_path.exists():
         msg = f"Directory {shared_gdrive_path} does not exist. Creating...."
@@ -31,16 +32,25 @@ def mklinks(shared_gdrive_path: Path) -> None:
         print(f"Nomadic results folder {nomadic_git} does not exist. Creating...")
         nomadic_git.mkdir(parents=True, exist_ok=True)
 
-    # Create symbolic links for each set of results
-    for path in shared_gdrive_path.iterdir():
-        nomadic_results = path / "nomadic"
-        if nomadic_results.exists():
-            expt_id = identify_exptid_from_path(nomadic_results, raise_error=False)
-            if expt_id:
-                target = nomadic_git / expt_id
-            else:
-                target = nomadic_git / path.name
+    # Create symbolic link or copy each set of nomadic results
+    for folder_path in shared_gdrive_path.iterdir():
+        # Identify if there is nomadic data
+        nomadic_results = folder_path / "nomadic"
+        if not nomadic_results.exists():
+            continue
 
+        # Identify exptid to buil the link
+        expt_id = identify_exptid_from_path(nomadic_results, raise_error=False)
+        if expt_id:
+            target = nomadic_git / expt_id
+        else:
+            target = nomadic_git / folder_path.name
+
+        # windows needs admin privileges to create symlinks
+        if os.name == "nt":
+            print(f"Copying nomadic files to {target}...")
+            shutil.copytree(nomadic_results, target)
+        else:
             print(f"Creating symbolic link for {nomadic_results} to {target.name}...")
             target.symlink_to(nomadic_results, target_is_directory=True)
 
