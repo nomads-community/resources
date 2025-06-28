@@ -47,7 +47,7 @@ pip install -e .
 ## Basic usage
 <details>
 
-`resources` has two commands which can be viewed by typing `resources --help`:
+`resources` commands can be viewed by typing `resources --help`:
 ```
 Usage: resources [OPTIONS] COMMAND [ARGS]...
 
@@ -60,6 +60,8 @@ Options:
 Commands:
   install  Install NOMADS tool(s)
   update   Update installed NOMADS tool(s)
+  nomadic  Move or link data from shared GDrive folder to the nomadic results
+           folder for local viewing  
 ```
 Help on each command can be viewed with the --help command e.g. `resources install --help`:
 ```
@@ -74,6 +76,14 @@ Options:
   -g, --git_folder PATH  Path to git folder to store all repositories
   --help                 Show this message and exit.
 ```
+
+## nomadic results
+`nomadic` needs to be run from the location where it was downloaded e.g. ~/git/nomadic. Similarly nomadic data is expected to be located in the results subfolder. `resources nomadic` automates the process of copying or linking data shared via GDrive to nomadic as follows
+
+```
+resources nomadic -g PATH_TO_SHARED_FOLDER
+```
+
 </details>
 
 ## Acknowledgements
