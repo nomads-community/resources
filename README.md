@@ -1,90 +1,15 @@
-<p align="center"><img src="misc/nomads_logo.png" width="500"></p>
+<p align="center"><img src="nomads_logo.png" width="500"></p>
 
 # NOMADS Resources 
-This repository contains a collection of resources to support NOMADS assay implementation as well as a tool called `resources` for easy installation and maintainence of NOMADS software.
+This repository contains a collection of resources to support NOMADS assay implementation as follows:
 
 # Folders
 
-- **bed files:** bed files related to the various NOMADS assays
+- **bed files:** bed files related to the various NOMADS assays, although [nomadic](https://jasonahendry.github.io/nomadic/) will be the most up to date.
 - **commodities:** information on equipment needed, primer sequences and reagents needed to start NOMADS sequencing
-- **misc:** other resources for NOMADS sequencing e.g. a guide to installing on Windows
+- **guides:** other resources for NOMADS sequencing e.g. a guide to installing on Windows
 - **protocol:** all published NOMADS protocols, and relevent ONT protocols
 
-
-# Resources tool
-Each NOMADS repository can be individually installed and updated using various comands, however this can be tedious for multiple repositories. To that end the `resources` tool aims to make it easy to install all other NOMADS tools and update / maintain already installed ones. 
-
-## Installation
-<details>
-
-#### Requirements
-
-To install `resources`, you will need:
-- Version control software [git](https://github.com/git-guides/install-git)
-- Package manager [mamba](https://github.com/conda-forge/miniforge) 
-
-**1. Clone the repository from github:**
-```
-git clone https://github.com/nomads-community/resources.git
-cd resources
-```
-
-**2. Install the dependencies with mamba:**
-```
-mamba env create -f environments/run.yml
-```
-
-**3. Open the `resources` environment:**
-```
-mamba activate resources
-```
-**4. Install `resources` and remaining dependencies:**
-```
-pip install -e .
-```
-</details>
-
-## Basic usage
-<details>
-
-`resources` commands can be viewed by typing `resources --help`:
-```
-Usage: resources [OPTIONS] COMMAND [ARGS]...
-
-  Install and maintain NOMADS software tools
-
-Options:
-  --version  Show the version and exit.
-  --help     Show this message and exit.
-
-Commands:
-  install  Install NOMADS tool(s)
-  update   Update installed NOMADS tool(s)
-  nomadic  Move or link data from shared GDrive folder to the nomadic results
-           folder for local viewing  
-```
-Help on each command can be viewed with the --help command e.g. `resources install --help`:
-```
-Usage: resources install [OPTIONS]
-
-  Install NOMADS tool(s)
-
-Options:
-  -n, --name TEXT        Name of the NOMADS tool to install. If installing
-                         multiple tools add multiple -n flags
-  -l, --list_tools       List all NOMADS tool names and info
-  -g, --git_folder PATH  Path to git folder to store all repositories
-  --help                 Show this message and exit.
-```
-
-## nomadic results
-`nomadic` needs to be run from the location where it was downloaded e.g. ~/git/nomadic. Similarly nomadic data is expected to be located in the results subfolder. `resources nomadic` automates the process of copying or linking data shared via GDrive to nomadic as follows
-
-```
-resources nomadic -g PATH_TO_SHARED_FOLDER
-```
-
-</details>
 
 ## Acknowledgements
 This work was funded by the Bill and Melinda Gates Foundation (INV-003660, INV-048316).
