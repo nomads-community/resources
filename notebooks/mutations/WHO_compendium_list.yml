@@ -1,0 +1,55 @@
+# YAML file containing amplicon drug resistance markers in the format:
+#
+# gene:
+  # validated: []
+  # candidate: []
+  # potential: []
+  # combinations:
+    # colour: []
+# List originally taken from https://www.who.int/news-room/questions-and-answers/item/artemisinin-resistance
+# Updated with WHO compendium, released Dec 2025
+
+# Gene names
+#  crt:   Chloroquine resistance transporter
+#  cytb:  Cytochrome b (mitochondrial)
+#  chfr:  Dihydrofolate reductase
+#  dhps:  Dihydropteroate synthase
+#  gch1:  GTP-cyclohydrolase I
+#  k13:   Kelch 13 (kelch-propeller domain protein)
+#  mdr1:  Multidrug resistance gene 1
+#  pm2/3: Plasmepsin 2 and 3
+
+crt:
+  validated: ["C72S","K76T", "A220S", "N326D", "I356L" ]
+  combinations:
+    0: ["C72S", "V73", "M74", "N75", "K76T"]
+    1: ["C72S", "K76T", "A220S", "N326D", "I356L"]
+    2: ["M74I", "N75E", "K76T", "A220S", "Q271E", "R371I"]
+    3: ["M74I", "N75E", "K76T", "A220S", "Q271E", "I356T", "R371I"]
+    4: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "R371I"]
+    5: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "I356T", "R371I"]
+    6: ["K76T", "A144T", "L160Y", "N326D"]
+
+
+kelch13:
+  validated: ["F446I", "N458Y", "C469Y", "M476I", "Y493H", "G533S", "R539T", "I543T", "P553L", "R561H", "P574L", "C580Y", "R622I", "A675V"]
+  candidate: ["E252Q", "P441L", "G449A", "C469F", "N537I", "N537D", "G538V", "V568G"]
+  potential: ["P413A","F495L","R515K", "M579I","D584V", "P527H", "G625R", "K438N", "G449A", "T508N", "Y511H", "S577L", "A582V", "N585K", "Q613E"]
+
+dhfr:
+  validated: ["N51I", "C59R", "S108N", "I164L"]
+  combinations:
+    triple: ["N51I", "C59R", "S108N"]
+    quadruple: ["N51I", "C59R", "S108N", "I164L"]
+
+dhps:
+  validated: [ "A437G", "K540E", "A581G"]
+  combinations:
+    double:  ["A437G", "K540E"]
+    triple: [ "A437G", "K540E", "A581G"]
+
+mdr1:
+  validated: ["N86Y"]
+
+coronin:
+  potential: ["G50E","R100K", "E107V"]
