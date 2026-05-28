@@ -1,0 +1,14 @@
+# This is the key Path to get correct - everything else assumes standard nomadic data structure
+workspace_dir: "~/Path_to_shared_folder/data/workspaces/ATSB/"
+output_dir: "./results"
+save_results: false
+
+# Enter the minimum prevalence threshold for mutations to be plotted individually
+min_prevalence: 5
+
+# List all experiments to exclude from analysis
+expts_to_exclude: [ "2024-07-20_DB001_ProjectNOMADS_BatchA" ]
+
+# List column name of category that you want to compare different sample subsets
+# e.g. enrolled_vs_failed column with empty (ignored), enrolled and failed entries.
+categories: ["enrolled_vs_failed"]
