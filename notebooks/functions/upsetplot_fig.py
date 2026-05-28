@@ -103,6 +103,7 @@ def upsetplot_fig(
 
         if min_prevalence is not None:
             test_columns = ["_sub-threshold"]
+            subthres_name = "*"
 
             # Mark all samples without validated markers
             validated_present = [c for c in validated if c in mutation_matrix.columns]
@@ -150,7 +151,7 @@ def upsetplot_fig(
                     },
                     index=[sample_ids],
                 )
-                subthres_name = "*"
+
                 collapsed_rows[subthres_name] = True
 
                 if subthres_name not in matrix_to_plot.columns:
@@ -160,8 +161,11 @@ def upsetplot_fig(
                     [matrix_to_plot, collapsed_rows], axis=0, ignore_index=True
                 )
 
-            # Remove WT category if not true for any samples
-            if ~matrix_to_plot[wt_category_name].any():
+            # Remove WT category if present and if all entries are False
+            if (
+                wt_category_name in matrix_to_plot.columns
+                and ~matrix_to_plot[wt_category_name].any()
+            ):
                 matrix_to_plot.drop(columns=[wt_category_name], inplace=True)
             mutation_matrix = matrix_to_plot.copy(deep=True)
 
@@ -294,13 +298,14 @@ def upsetplot_fig(
         ############################
 
         if min_prevalence is not None:
-            fig.text(
-                0.2,
-                0,
-                f"*combinations with <{min_prevalence}% prevalence collapsed into a single category",
-                ha="center",
-                fontsize=8,
-            )
+            if subthres_name in mutation_matrix.columns:
+                fig.text(
+                    0.2,
+                    0,
+                    f"*combinations with <{min_prevalence}% prevalence collapsed into a single category",
+                    ha="center",
+                    fontsize=8,
+                )
 
         up_plot["intersections"].set_title(
             f"{gene}",
