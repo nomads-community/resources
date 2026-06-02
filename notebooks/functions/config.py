@@ -14,6 +14,7 @@ summaries_dir = workspace_dir / "summaries" / workspace_dir.name
 
 # Other settings
 save_results = config["save_results"]
+save_format = config["save_format"]
 min_prevalence = config["min_prevalence"]
 expts_to_exclude = config["expts_to_exclude"]
 categories = config["categories"]
