@@ -1,7 +1,9 @@
 # This is the key Path to get correct - everything else assumes standard nomadic data structure
 workspace_dir: "~/Path_to_shared_folder/data/workspaces/ATSB/"
-output_dir: "./results"
-save_results: false
+
+output_dir: "./results" # Change to another path as needed
+save_results: False # Options: True, False
+save_format: "svg" # Options: "svg", "pdf", "png"
 
 # Enter the minimum prevalence threshold for mutations to be plotted individually
 min_prevalence: 5
