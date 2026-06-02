@@ -9,18 +9,19 @@ import upsetplot as up
 
 def upsetplot_fig(
     variants_df: pd.DataFrame,
-    ids_passed_QC: pd.DataFrame,
     gene: str,
     muts_dict: dict,
+    ids_passed_QC: Optional[pd.DataFrame] = None,
     min_prevalence: Optional[float] = None,
 ) -> plt.Figure:
     """
     Generate an upset plot in a matplot figure based on the provided DataFrame and values column.
     Args:
         variants_df (pd.DataFrame): DataFrame containing all variant calls
-        ids_passed_QC (pd.DataFrame): All samples (gene / amplicon level) that have passed QC
-        target_gene (str): Name of the gene to generate the plot for
+        gene (str): Name of the gene to generate the plot for
         muts_dict (dict): Dictionary of mutations and combinations
+        ids_passed_QC (pd.DataFrame): All samples (gene / amplicon level) that have passed QC
+        min_prevalence (float): Minimum prevalence threshold under which mutations will be collapsed into a single category.
     Returns:
         plt.Figure: The generated upset plot as a matplotlib fig.
     """
@@ -39,8 +40,10 @@ def upsetplot_fig(
         ############################
         # Filter variants
         ############################
-        variants_df = variants_df[variants_df["amplicon"].str.contains(gene, na=False)]
-        variants_df = variants_df[variants_df["gt_int"] != "0"]
+        variants_df = variants_df[variants_df["gene"] == gene]
+        all_ids = set(variants_df["sample_id"])
+        # gt_int values: 0 = WT, 1 = het, 2 = hom mut, -1 = filtered out / no call
+        variants_df = variants_df[variants_df["gt_int"] > 0]
         variants_df = variants_df[variants_df["mut_type"] == "missense"]
 
         ############################
@@ -55,19 +58,23 @@ def upsetplot_fig(
         ############################
         # Add WT samples
         ############################
-        ids_nonref = list(variants_df["sample_id"].unique())
+        ids_nonref = set(variants_df["sample_id"])
 
-        ids_ref = ids_passed_QC[
-            (ids_passed_QC["gene"].isin([gene]))
-            & ~(ids_passed_QC["sample_id"].isin(ids_nonref))
-        ]
+        if ids_passed_QC is not None:
+            ids_ref = set(
+                ids_passed_QC.query("gene in @gene and sample_id not in @ids_nonref")[
+                    "sample_id"
+                ]
+            )
+        else:
+            ids_ref = all_ids - ids_nonref
 
         wt_category_name = "WT"
 
-        if not ids_ref.empty:
+        if len(ids_ref) > 0:
             new_rows_df = pd.DataFrame(
                 False,
-                index=ids_ref["sample_id"],
+                index=list(ids_ref),
                 columns=mutation_matrix.columns,
             )
 
