@@ -1,0 +1,12 @@
+name: nomads
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - pandas
+  - numpy
+  - plotly
+  - pyyaml
+  - jupyterlab
+  - upsetplot
+  - statsmodels
