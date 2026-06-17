@@ -3,10 +3,11 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.10
-  - pandas
-  - numpy
+  - pandas<3
+  - numpy<2.4
   - plotly
   - pyyaml
   - jupyterlab
   - upsetplot
   - statsmodels
+
