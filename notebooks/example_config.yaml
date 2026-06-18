@@ -2,14 +2,21 @@
 workspace_dir: "~/Path_to_shared_folder/data/workspaces/ATSB/"
 
 output_dir: "./results" # Change to another path as needed
-save_results: False # Options: True, False
-save_format: "svg" # Options: "svg", "pdf", "png"
+save_results: False # Options: True, False (default)
+save_format: "svg" # Options: "svg" (default), "pdf", "png"
 
 # Enter the minimum prevalence threshold for mutations to be plotted individually
-min_prevalence: 5
+# Comment out to include all
+# min_prevalence: 5 
 
 # List all experiments to exclude from analysis
-expts_to_exclude: [ "2024-07-20_DB001_ProjectNOMADS_BatchA" ]
+# expts_to_exclude: [ "ExperimentNames" ]
+# e.g. expts_to_exclude: [ "2024-07-20_DB001_ProjectNOMADS_BatchA" ]
+
+# barcodes_to_exclude: 
+#   ExperimentName: [ barcodelist ]
+#   e.g. 2024-07-20_DB001_ProjectNOMADS_BatchA: [1,2,3]
+
 
 # List column name of category that you want to compare different sample subsets
 # e.g. enrolled_vs_failed column with empty (ignored), enrolled and failed entries.
