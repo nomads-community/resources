@@ -11,6 +11,7 @@ output_dir = Path.cwd() / config.get("output_dir", "results")
 
 # Derived paths
 summaries_dir = workspace_dir / "summaries" / workspace_dir.name
+results_dir = workspace_dir / "results"
 
 # Other settings
 save_results = config.get("save_results",False)
@@ -25,6 +26,7 @@ def output_config_values_to_user():
         "Workspace dir": workspace_dir,
         "Output dir": output_dir,
         "Summaries dir": summaries_dir,
+        "Results dir": results_dir,
         "Save results": save_results,
         "Save format": save_format,
         "Min prevalence": min_prevalence,
