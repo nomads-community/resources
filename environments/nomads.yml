@@ -10,4 +10,6 @@ dependencies:
   - jupyterlab
   - upsetplot
   - statsmodels
+  - seaborn
+  - python-kaleido
 
