@@ -6,7 +6,7 @@ with open("../config.yaml") as f:
     config = yaml.safe_load(f)
 
 # Convert user paths
-workspace_dir = Path(config.get["workspace_dir"]).expanduser()
+workspace_dir = Path(config.get("workspace_dir")).expanduser()
 output_dir = Path.cwd() / config.get("output_dir", "results")
 
 # Derived paths
