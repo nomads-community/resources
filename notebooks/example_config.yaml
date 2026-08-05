@@ -1,5 +1,5 @@
 # This is the key Path to get correct - everything else assumes standard nomadic data structure
-workspace_dir: "~/Path_to_shared_folder/data/workspaces/ATSB/"
+workspace_dir: "~/Path_to_shared_folder/workspacename/"
 
 # List column name of category that you want to compare different sample subsets
 # e.g. enrolled_vs_failed column with empty (ignored), enrolled and failed entries.

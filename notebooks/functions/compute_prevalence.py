@@ -27,7 +27,7 @@ def compute_variant_prevalence(
     """
     Compute the prevalence of each mutation in `variants_df`
     """
-    print(f"Additional groups: {additional_groups}")
+    # print(f"Additional groups: {additional_groups}")
     if additional_groups is None:
         additional_groups = []
 
