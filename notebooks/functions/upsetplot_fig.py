@@ -147,7 +147,6 @@ def upsetplot_fig(
                 transform=ax.transAxes,
             )
             ax.axis("off")
-            # return fig
 
         if combinations_only:
             drop_noncombo_cols = [f for f in mutation_matrix.columns if f not in unique_combo_muts ]
@@ -234,8 +233,9 @@ def upsetplot_fig(
             sort_by="cardinality",
             show_percentages="{:.0%}",
             show_counts=True,
-        )
-                
+            totals_plot_elements=0 if combinations_only else 1,
+            )
+
         ############################
         # WT styling
         ############################
@@ -342,8 +342,13 @@ def upsetplot_fig(
                             label=combo_name,
                         )
                         legend_names.append(combo_name)
+
         if len(legend_names) > 0:
-            fig.legend(loc="lower left", bbox_to_anchor=(1, 0))
+            handles, labels = ax.get_legend_handles_labels()
+            order = [labels.index(name) for name in combinations.keys() if name in labels]
+            handles = [handles[i] for i in order]
+            labels = [labels[i] for i in order]
+            fig.legend(handles, labels, loc="lower left", bbox_to_anchor=(1, 0.1))
 
         ############################
         # Formatting
@@ -363,12 +368,13 @@ def upsetplot_fig(
             pad=20,
         )
         up_plot["intersections"].set_ylabel("Count")
-        up_plot["totals"].set_xlabel("Count")
+        if not combinations_only:
+            up_plot["totals"].set_xlabel("Count")
 
         if combinations_only:
             fig.text(0,
                      -0.1,
-                     "NOTE: All mutations outside of the specified combinations have been removed from this plot!",
+                     "NOTE: All mutation combinations other than the ones listed have been removed from this plot!",
                      ha="left",
                      fontsize=8,
                     )
