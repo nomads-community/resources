@@ -37,19 +37,28 @@ kelch13:
   potential: ["P413A","F495L","R515K", "M579I","D584V", "P527H", "G625R", "K438N", "G449A", "T508N", "Y511H", "S577L", "A582V", "N585K", "Q613E"]
 
 dhfr:
-  validated: ["N51I", "C59R", "S108N", "I164L"]
+  validated: ["N51I", "C59R", "S108N" ]
+  candidate: ["I164L"]
   combinations:
-    triple: ["N51I", "C59R", "S108N"]
-    quadruple: ["N51I", "C59R", "S108N", "I164L"]
+    dhfr_triple: ["N51I", "C59R", "S108N"]
+    dhfr_quadruple: ["N51I", "C59R", "S108N", "I164L"]
 
 dhps:
   validated: [ "A437G", "K540E", "A581G"]
   combinations:
-    double:  ["A437G", "K540E"]
-    triple: [ "A437G", "K540E", "A581G"]
+    dhps_double:  ["A437G", "K540E"]
+    dhps_triple: [ "A437G", "K540E", "A581G"]
 
 mdr1:
   validated: ["N86Y"]
 
 coronin:
   potential: ["G50E","R100K", "E107V"]
+
+multigene:
+  dhfr-dhps:
+    dhfr-dhps_3:NRNI-ISAEAA: ["dhfr-C59R", "dhfr-S108N", "dhps-K540E"]
+    dhfr-dhps_4:ICNI-ISGEAA: ["dhfr-N51I", "dhfr-S108N", "dhps-A437G", "dhps-K540E"]
+    dhfr-dhps_4:IRNI-ISGKAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G"]
+    dhfr-dhps_5:IRNI-IAGKAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A", "dhps-A437G"]
+    dhfr-dhps_5:IRNI-ISGEAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-K540E"]
