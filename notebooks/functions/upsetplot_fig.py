@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,22 +8,43 @@ import upsetplot as up
 
 def upsetplot_fig(
     variants_df: pd.DataFrame,
-    gene: str,
+    genes: str | list[str],
     muts_dict: dict,
-    ids_passed_QC: Optional[pd.DataFrame] = None,
-    min_prevalence: Optional[float] = None,
+    ids_passed_QC: pd.DataFrame | None = None,
+    min_prevalence: float | None = None,
+    combinations_only: bool = False,
 ) -> plt.Figure:
     """
     Generate an upset plot in a matplot figure based on the provided DataFrame and values column.
     Args:
         variants_df (pd.DataFrame): DataFrame containing all variant calls
-        gene (str): Name of the gene to generate the plot for
+        genes (str | list(str)): Name of the gene(s) to generate the plot for
         muts_dict (dict): Dictionary of mutations and combinations
         ids_passed_QC (pd.DataFrame): All samples (gene / amplicon level) that have passed QC
         min_prevalence (float): Minimum prevalence threshold under which mutations will be collapsed into a single category.
+        combinations_only (bool): Removes all data except for samples carrying a combination of defined mutations.
     Returns:
         plt.Figure: The generated upset plot as a matplotlib fig.
     """
+
+    assert not (min_prevalence is not None and combinations_only), \
+        "Specify either min_prevalence or combinations_only, not both."
+
+    def filter_row(row):
+        """
+        Identifes the largest combination of mutations that match a sample
+        """
+        mutated = set(row.index[row])
+        matched = [combo for combo in combo_sets if combo.issubset(mutated)]
+
+        if not matched:
+            return pd.Series(False, index=row.index)
+        
+        best_combo = max(matched, key=len)
+        return pd.Series(row.index.isin(best_combo), index=row.index)
+    
+    if isinstance(genes, str):
+        genes = [genes]
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
@@ -32,29 +52,49 @@ def upsetplot_fig(
         ############################
         # Extract mutation metadata
         ############################
-        target = muts_dict.get(gene, {})
-        candidate = list(target.get("candidate", []))
-        validated = list(target.get("validated", []))
-        combinations = target.get("combinations", {})
+        candidate = []
+        validated = []
+        combinations = {}
+        unique_combo_muts = []
+        for gene in genes:
+            target = muts_dict.get(gene, {})
+            prefix = f"{gene}-" if len(genes)>1 else ""
+            candidate += [f"{prefix}{c}" for c in target.get("candidate", [])]
+            validated += [f"{prefix}{v}" for v in target.get("validated", [])]
+            combos = target.get("combinations", {})
+            for key, value in combos.items():
+                mutations = [f"{prefix}{a}" for a in value]
+                combinations[key] = mutations
+                unique_combo_muts += [ m for m in mutations if m not in unique_combo_muts]
+
+        ############################
+        # Add in multigene combinations
+        ############################
+        if len(genes) > 1:
+            multitarget = muts_dict.get("multigene", {})
+            for gene_grp, values in multitarget.items():
+                gs = gene_grp.split("-")
+                if set(gs).issubset(genes):
+                    combinations = combinations | values
 
         ############################
         # Filter variants
         ############################
-        variants_df = variants_df[variants_df["gene"] == gene]
+        variants_df = variants_df[variants_df["gene"].isin(genes)]
         all_ids = set(variants_df["sample_id"])
         # gt_int values: 0 = WT, 1 = het, 2 = hom mut, -1 = filtered out / no call
         variants_df = variants_df[variants_df["gt_int"] > 0]
         variants_df = variants_df[variants_df["mut_type"] == "missense"]
-
+        
         ############################
         # Build mutation matrix
         ############################
         mutation_matrix = pd.crosstab(
             variants_df["sample_id"],
-            variants_df["aa_change"],
+            variants_df["mutation" if len(genes)>1 else "aa_change"],
         )
         mutation_matrix = mutation_matrix.astype(bool)
-
+        
         ############################
         # Add WT samples
         ############################
@@ -62,7 +102,7 @@ def upsetplot_fig(
 
         if ids_passed_QC is not None:
             ids_ref = set(
-                ids_passed_QC.query("gene in @gene and sample_id not in @ids_nonref")[
+                ids_passed_QC.query("gene in @genes and sample_id not in @ids_nonref")[
                     "sample_id"
                 ]
             )
@@ -81,18 +121,19 @@ def upsetplot_fig(
             mutation_matrix[wt_category_name] = False
             new_rows_df[wt_category_name] = True
             mutation_matrix = pd.concat([mutation_matrix, new_rows_df])
-
+        
         ############################
         # Handle empty/single-category
         ############################
         if mutation_matrix.empty or mutation_matrix.shape[1] == 1:
             if mutation_matrix.empty:
-                text_msg = f"No data available for {gene}."
+                text_msg = f"No data available for {genes}."
             else:
+                first_col = next(iter(mutation_matrix.columns))
                 text_msg = (
                     f"All samples are "
-                    f"{list(mutation_matrix.columns)[0]} "
-                    f"for {gene} so unable to plot"
+                    f"{first_col} "
+                    f"for {genes} so unable to plot"
                 )
 
             fig = plt.figure(figsize=(4, 3))
@@ -106,9 +147,15 @@ def upsetplot_fig(
                 transform=ax.transAxes,
             )
             ax.axis("off")
-            return fig
+            # return fig
 
-        if min_prevalence is not None:
+        if combinations_only:
+            drop_noncombo_cols = [f for f in mutation_matrix.columns if f not in unique_combo_muts ]
+            mutation_matrix.drop(columns=drop_noncombo_cols, inplace=True)
+            combo_sets = [set(c) for c in combinations.values()]
+            mutation_matrix = mutation_matrix.apply(filter_row, axis=1)
+
+        elif min_prevalence is not None:
             test_columns = ["_sub-threshold"]
             subthres_name = "*"
 
@@ -136,7 +183,7 @@ def upsetplot_fig(
                 mut_signature_counts[mut_signature_counts < min_count].index
             )
             mutation_matrix["_sub-threshold"] = mut_signatures.apply(
-                lambda x: True if x in subthresh_signatures else False
+                lambda x: x in subthresh_signatures
             )
 
             # Keep entries that are above the threshold and don't have validated markers
@@ -188,7 +235,7 @@ def upsetplot_fig(
             show_percentages="{:.0%}",
             show_counts=True,
         )
-
+                
         ############################
         # WT styling
         ############################
@@ -253,8 +300,8 @@ def upsetplot_fig(
         colours = [
             cmap(x)
             for x in np.linspace(
-                0.55,
-                0.98,
+                0.4,
+                1,
                 max(len(combinations), 1),
             )
         ]
@@ -264,62 +311,66 @@ def upsetplot_fig(
         intersections_names = list(up_obj.intersections.index.names)
 
         legend_names = []
-        # Loop through each combination of mutations
-        for colour_idx, (combo_name, members) in enumerate(combinations.items()):
-            # Loop through each intersection (column)
-            for col_idx, subset in enumerate(intersections_idx):
-                muts_present = [
-                    name
-                    for name, present in zip(intersections_names, subset)
-                    if present
-                ]
-                if all(x in muts_present for x in members):
-                    # Identify appropriate combination nodes
-                    for row_idx, mut in enumerate(intersections_names):
-                        # Only highlight selected mutations
-                        if mut in members:
-                            if combo_name in legend_names:
-                                ax.scatter(
-                                    col_idx,
-                                    row_idx,
-                                    color=colours[colour_idx],
-                                    s=80,
-                                    zorder=20,
-                                )
-                            else:
-                                ax.scatter(
-                                    col_idx,
-                                    row_idx,
-                                    color=colours[colour_idx],
-                                    s=80,
-                                    zorder=20,
-                                    label=combo_name,
-                                )
-                                # Add entry to list
-                                legend_names.append(combo_name)
+        combo_keys = list(combinations.keys())
+
+        # Loop through each intersection (column) first
+        for col_idx, subset in enumerate(intersections_idx):
+            muts_present = [name for name, present in zip(intersections_names, subset) if present]
+
+            # Find every combo fully contained in this intersection
+            matching_combos = [
+                (combo_name, members)
+                for combo_name, members in combinations.items()
+                if all(x in muts_present for x in members)
+            ]
+
+            if not matching_combos:
+                continue
+
+            # Keep only the most specific (largest) matching combo for this column
+            combo_name, members = max(matching_combos, key=lambda item: len(item[1]))
+            colour_idx = combo_keys.index(combo_name)
+
+            for row_idx, mut in enumerate(intersections_names):
+                if mut in members:
+                    if combo_name in legend_names:
+                        ax.scatter(col_idx, row_idx, color=colours[colour_idx], s=80, zorder=20)
+                    else:
+                        ax.scatter(
+                            col_idx, row_idx,
+                            color=colours[colour_idx], s=80, zorder=20,
+                            label=combo_name,
+                        )
+                        legend_names.append(combo_name)
         if len(legend_names) > 0:
-            fig.legend(loc="lower right", bbox_to_anchor=(1, 0))
+            fig.legend(loc="lower left", bbox_to_anchor=(1, 0))
 
         ############################
         # Formatting
         ############################
-
-        if min_prevalence is not None:
-            if subthres_name in mutation_matrix.columns:
-                fig.text(
-                    0.2,
-                    0,
-                    f"*combinations with <{min_prevalence}% prevalence collapsed into a single category",
-                    ha="center",
-                    fontsize=8,
-                )
+        if min_prevalence is not None and subthres_name in mutation_matrix.columns:
+            fig.text(
+                0,
+                -0.1,
+                f"* all samples <{min_prevalence}% prevalence without any validated markers",
+                ha="left",
+                fontsize=8,
+            )
 
         up_plot["intersections"].set_title(
-            f"{gene}",
+            f"{" & ".join(genes)}",
             fontsize=16,
             pad=20,
         )
         up_plot["intersections"].set_ylabel("Count")
         up_plot["totals"].set_xlabel("Count")
+
+        if combinations_only:
+            fig.text(0,
+                     -0.1,
+                     "NOTE: All mutations outside of the specified combinations have been removed from this plot!",
+                     ha="left",
+                     fontsize=8,
+                    )
 
         return fig
