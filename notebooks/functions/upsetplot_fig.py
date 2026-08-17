@@ -363,7 +363,7 @@ def upsetplot_fig(
             )
 
         up_plot["intersections"].set_title(
-            f"{" & ".join(genes)}",
+            f"{" & ".join(genes)}, (n={len(mutation_matrix)})",
             fontsize=16,
             pad=20,
         )
