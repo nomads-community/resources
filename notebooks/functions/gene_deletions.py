@@ -1,8 +1,10 @@
 import math
 import random
-import pandas as pd
-import numpy as np
 from dataclasses import dataclass
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # --------------------------------------------------------------------------------
 # MCMC Components
@@ -264,7 +266,7 @@ class DeletionFinder:
         return np.exp(np.log(lterms)[:-1].sum() / (n - 1))
 
     def estimate_hyperparameters(
-        self, negative_barcodes: list[str], control_amplicons: list[str] = None
+        self, negative_barcodes: list[str], control_amplicons: list[str] | None = None
     ):
         """
         Estimate the MCMC hyperparameters
