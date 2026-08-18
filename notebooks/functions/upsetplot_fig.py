@@ -295,12 +295,12 @@ def upsetplot_fig(
         ############################
         # Highlight specific nodes
         ############################
-        cmap = plt.colormaps.get_cmap("Reds")
+        cmap = plt.colormaps.get_cmap("viridis")
 
         colours = [
             cmap(x)
             for x in np.linspace(
-                0.4,
+                0.1,
                 1,
                 max(len(combinations), 1),
             )
