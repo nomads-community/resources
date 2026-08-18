@@ -147,7 +147,7 @@ def upsetplot_fig(
             ax.axis("off")
 
         if combinations_only:
-            unique_combo_muts = set([mut for combo in combinations.values() for mut in combo])
+            unique_combo_muts = {mut for combo in combinations.values() for mut in combo}
             drop_noncombo_cols = [f for f in mutation_matrix.columns if f not in unique_combo_muts ]
             mutation_matrix.drop(columns=drop_noncombo_cols, inplace=True)
             combo_sets = [set(c) for c in combinations.values()]
