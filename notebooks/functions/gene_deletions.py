@@ -177,7 +177,34 @@ class DeletionMCMC:
 # Deletion Finder using Bayesian MCMC
 #
 # --------------------------------------------------------------------------------
-
+AMPLICONS_DEL_MVP = [
+    #Original
+    # "hrp2-exon2-complete",
+    # "hrp3-exon2-complete",
+    # New nomenclature
+    "hrp2-p14-306", 
+    "hrp3-p14-276"
+    ]
+AMPLICONS_CONTROL_MVP = [
+    #Original
+    # "ama1-d2-18-ck",
+    # "crt-k76",
+    # "csp-rtss-repeat",
+    # "dhfr-p51-p164",
+    # "dhps-p436-p613",
+    # "kelch13-cterm",
+    # "mdr1-p1034-p1246",
+    # "mdr1-p86-p184",
+    # New nomenclature
+    "ama1-p74-384", 
+    "crt-p14-125", 
+    "csp-p19-398", 
+    "dhfr-p1-410",
+    "dhps-p317-707",
+    "kelch13-p383-727",
+    "mdr1-p46-245", 
+    "mdr1-p968-1278"
+    ]
 
 @dataclass
 class ModelHyperParameters:
@@ -189,45 +216,19 @@ class ModelHyperParameters:
 class DeletionFinder:
     """
     Find deletions in amplicon sequecing data using Bayesian MCMC
-
     """
 
-    AMPLICONS_DEL_MVP = [
-        #Original
-        # "hrp2-exon2-complete",
-        # "hrp3-exon2-complete",
-        # New nomenclature
-        "hrp2-p14-306", 
-        "hrp3-p14-276"
-    ]
-    AMPLICONS_CONTROL_MVP = [
-        #Original
-        # "ama1-d2-18-ck",
-        # "crt-k76",
-        # "csp-rtss-repeat",
-        # "dhfr-p51-p164",
-        # "dhps-p436-p613",
-        # "kelch13-cterm",
-        # "mdr1-p1034-p1246",
-        # "mdr1-p86-p184",
-        # New nomenclature
-        "ama1-p74-384", 
-        "crt-p14-125", 
-        "csp-p19-398", 
-        "dhfr-p1-410",
-        "dhps-p317-707",
-        "kelch13-p383-727",
-        "mdr1-p46-245", 
-        "mdr1-p968-1278"
-        ]
-
-    def __init__(self, df_bedcov: pd.DataFrame) -> None:
+    def __init__(self, df_bedcov: pd.DataFrame,
+                 deleted_amplicons: list[str] = AMPLICONS_DEL_MVP) -> None:
         """
         Initialise the deletion finder and preprocess for MCMC
         """
 
         # Store
         self.df_bedcov = df_bedcov.query("barcode != 'unclassified'")
+
+        #Add in amplicon listings
+        self.deleted_amplicons = deleted_amplicons
 
         # Mean coverage dataframe
         self.df_mean_cov = self._create_mean_cov_dataframe()
@@ -266,20 +267,21 @@ class DeletionFinder:
         return np.exp(np.log(lterms)[:-1].sum() / (n - 1))
 
     def estimate_hyperparameters(
-        self, negative_barcodes: list[str], control_amplicons: list[str] | None = None
+        self, negative_barcodes: list[str], control_amplicons: list[str] = AMPLICONS_CONTROL_MVP
     ):
         """
         Estimate the MCMC hyperparameters
         """
-        if control_amplicons is None:
-            control_amplicons = self.AMPLICONS_CONTROL_MVP
         
+        self.control_amplicons = control_amplicons
+        passed_amplicons = self.get_amplicons_passing()
+
         # Estimate misclassification rate
         error_rate = self.df_norm_cov.loc[negative_barcodes].to_numpy().flatten().mean()
 
         # Estimate sample qualities
-        sample_qual_mean = self.df_norm_cov[control_amplicons].to_numpy().mean(1)
-        sample_qual_var = self.df_norm_cov[control_amplicons].to_numpy().var(1)
+        sample_qual_mean = self.df_norm_cov[passed_amplicons].to_numpy().mean(1)
+        sample_qual_var = self.df_norm_cov[passed_amplicons].to_numpy().var(1)
 
         # Estimate overdispersion in sample quality
         scale = self.scale_estimator(sample_qual_mean, sample_qual_var)
@@ -292,6 +294,20 @@ class DeletionFinder:
         )
 
         return self.hyperparams
+    
+    def get_amplicons_passing(self, min_reads: float = 100, min_pct_pass: float = 0.7) -> list:
+        """
+        Determine which of the control amplicons passes coverage
+        """
+        df = self.df_bedcov[self.df_bedcov["name"].isin(self.control_amplicons)]
+        pct_passing = (df["n_reads"]
+                       .ge(min_reads)
+                       .groupby(self.df_bedcov["name"])
+                       .mean()
+                       )
+        
+        return list(pct_passing[pct_passing >= min_pct_pass].index)
+        
 
     def run_mcmc(self, target_gene: str, prior_del: float = 0.5) -> None:
         """
