@@ -4,19 +4,19 @@ import pandas as pd
 from statsmodels.stats.proportion import proportion_confint
 
 # These columns are used to define unique variants
-VARIANTS_GROUP_COLUMNS = [
-    "gene",
+GENE_COL = "gene"
+AA_CHANGE_COL = "aa_change"
+AA_POS_COL = "aa_pos"
+AA_CALL_COL = "aa_call"
+
+REF_POS_COL = "ref_pos"
+
+AA_GROUP_COLUMNS = [
     "chrom",
-    "aa_pos",
+    GENE_COL,
+    AA_POS_COL,
+    AA_CHANGE_COL,
 ]
-
-# These groups are used to define a unique mutation, e.g. A127E
-VARIANTS_MUTATION_COLUMNS = [
-    "aa_change",
-    "mut_type",
-    "mutation",
-]
-
 
 # Taken verbatim from nomadic
 def compute_variant_prevalence(
@@ -27,7 +27,6 @@ def compute_variant_prevalence(
     """
     Compute the prevalence of each mutation in `variants_df`
     """
-    # print(f"Additional groups: {additional_groups}")
     if additional_groups is None:
         additional_groups = []
 
@@ -45,72 +44,58 @@ def compute_variant_prevalence(
             validate="m:1",
         )
 
-    agg_aa_change_df = (
-        variants_df.loc[variants_df["type"].isin(["mixed_mut", "mut"])]
-        .groupby(
-            VARIANTS_GROUP_COLUMNS + VARIANTS_MUTATION_COLUMNS + additional_groups,
-        )
-        .agg(
-            n_mixed=pd.NamedAgg("type", lambda x: (x == "mixed_mut").sum()),
-            n_mut=pd.NamedAgg("type", lambda x: (x == "mut").sum()),
-        )
+    passed_types = {"mixed", "mutant", "absent", "wt"}
+
+    # Precompute so we can use fast sum aggregation
+    variants_df = variants_df.assign(
+        _passed=variants_df[AA_CALL_COL].isin(passed_types),
+        _wt=variants_df[AA_CALL_COL].eq("wt"),
+        _mixed=variants_df[AA_CALL_COL].eq("mixed"),
+        _mut=variants_df[AA_CALL_COL].eq("mutant"),
     )
 
-    groups = (
-        variants_df[VARIANTS_GROUP_COLUMNS + additional_groups]
-        .drop_duplicates()
-        .dropna()
-    )
-    muts = (
-        variants_df[VARIANTS_GROUP_COLUMNS + VARIANTS_MUTATION_COLUMNS]
-        .query("mut_type == 'missense'")
-        .drop_duplicates()
-        .dropna()
-    )
-
-    # Build full index so we see also values for groups that have no mutation
-    full_index = (
-        groups.merge(muts, how="inner", on=VARIANTS_GROUP_COLUMNS)
-        .set_index(
-            VARIANTS_GROUP_COLUMNS + VARIANTS_MUTATION_COLUMNS + additional_groups
-        )
-        .index
-    )
-    # Ensure all n_mut, n_mixed are filled with zeros
-    agg_aa_change_df = agg_aa_change_df.reindex(full_index).reset_index().fillna(0)
-
-    agg_aa_pos_df = variants_df.groupby(
-        VARIANTS_GROUP_COLUMNS + additional_groups,
-        as_index=False,
+    prev_df = variants_df.groupby(
+        AA_GROUP_COLUMNS + additional_groups, as_index=False
     ).agg(
-        n_samples=pd.NamedAgg("type", "size"),
-        n_passed=pd.NamedAgg("type", lambda x: sum(x != "filtered")),
-        n_wt=pd.NamedAgg("type", lambda x: sum(x == "wt")),
+        n_samples=(AA_CALL_COL, "size"),
+        n_passed=("_passed", "sum"),
+        n_wt=("_wt", "sum"),
+        n_mixed=("_mixed", "sum"),
+        n_mut=("_mut", "sum"),
     )
-
-    prev_df = agg_aa_change_df.merge(
-        agg_aa_pos_df,
-        on=VARIANTS_GROUP_COLUMNS + additional_groups,
-        how="left",
-        validate="m:1",
-    )
-
+    has_passing_samples = prev_df["n_passed"].ne(0)
     # Compute frequencies
-    prev_df["per_wt"] = 100 * prev_df["n_wt"] / prev_df["n_passed"]
-    prev_df["per_mixed"] = 100 * prev_df["n_mixed"] / prev_df["n_passed"]
-    prev_df["per_mut"] = 100 * prev_df["n_mut"] / prev_df["n_passed"]
+    prev_df.loc[has_passing_samples, "per_wt"] = (
+        100
+        * prev_df.loc[has_passing_samples, "n_wt"]
+        / prev_df.loc[has_passing_samples, "n_passed"]
+    )
+    prev_df.loc[has_passing_samples, "per_mixed"] = (
+        100
+        * prev_df.loc[has_passing_samples, "n_mixed"]
+        / prev_df.loc[has_passing_samples, "n_passed"]
+    )
+    prev_df.loc[has_passing_samples, "per_mut"] = (
+        100
+        * prev_df.loc[has_passing_samples, "n_mut"]
+        / prev_df.loc[has_passing_samples, "n_passed"]
+    )
 
     # Compute prevalence
-    prev_df["prevalence"] = prev_df["per_mixed"] + prev_df["per_mut"]
+    prev_df.loc[has_passing_samples, "prevalence"] = (
+        prev_df.loc[has_passing_samples, "per_mixed"]
+        + prev_df.loc[has_passing_samples, "per_mut"]
+    )
 
     # Compute prevalence 95% confidence intervals
     low, high = proportion_confint(
-        prev_df["n_mut"] + prev_df["n_mixed"],
-        prev_df["n_passed"],
+        prev_df.loc[has_passing_samples, "n_mut"]
+        + prev_df.loc[has_passing_samples, "n_mixed"],
+        prev_df.loc[has_passing_samples, "n_passed"],
         alpha=0.05,
         method="beta",
     )
-    prev_df["prevalence_lowci"] = 100 * low
-    prev_df["prevalence_highci"] = 100 * high
+    prev_df.loc[has_passing_samples, "prevalence_lowci"] = 100 * low
+    prev_df.loc[has_passing_samples, "prevalence_highci"] = 100 * high
 
     return prev_df

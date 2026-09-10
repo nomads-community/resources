@@ -10,7 +10,6 @@ def upsetplot_fig(
     variants_df: pd.DataFrame,
     genes: str | list[str],
     muts_dict: dict,
-    ids_passed_QC: pd.DataFrame | None = None,
     min_prevalence: float | None = None,
     combinations_only: bool = False,
 ) -> plt.Figure:
@@ -20,9 +19,8 @@ def upsetplot_fig(
         variants_df (pd.DataFrame): DataFrame containing all variant calls
         genes (str | list(str)): Name of the gene(s) to generate the plot for
         muts_dict (dict): Dictionary of mutations and combinations
-        ids_passed_QC (pd.DataFrame): All samples (gene / amplicon level) that have passed QC
         min_prevalence (float): Minimum prevalence threshold under which mutations will be collapsed into a single category.
-        combinations_only (bool): Removes all data except for samples carrying a combination of defined mutations.
+        combinations_only (bool): Removes all data except for samples carrying a combination of mutations defined in the muts_dict.
     Returns:
         plt.Figure: The generated upset plot as a matplotlib fig.
     """
@@ -78,47 +76,31 @@ def upsetplot_fig(
         ############################
         # Filter variants
         ############################
-        variants_df = variants_df[variants_df["gene"].isin(genes)]
-        all_ids = set(variants_df["sample_id"])
-        # gt_int values: 0 = WT, 1 = het, 2 = hom mut, -1 = filtered out / no call
-        variants_df = variants_df[variants_df["gt_int"] > 0]
-        variants_df = variants_df[variants_df["mut_type"] == "missense"]
+        variants_df = variants_df[variants_df["gene"].isin(genes)].copy()
+        call_to_int = {'mutant': True, 'wt': False, 'mixed': True}
+        variants_df['aa_mut_pres'] = variants_df['aa_call'].map(call_to_int).astype('Int64')
         
         ############################
         # Build mutation matrix
         ############################
-        mutation_matrix = pd.crosstab(
-            variants_df["sample_id"],
-            variants_df["mutation" if len(genes)>1 else "aa_change"],
-        )
-        mutation_matrix = mutation_matrix.astype(bool)
+        if len(genes) > 1:
+            variants_df["aa_change"] = variants_df["gene"] + "-" + variants_df["aa_change"]
+
+        mutation_matrix = variants_df.pivot(index='sample_id', columns='aa_change', values='aa_mut_pres')
+        mutation_matrix = mutation_matrix.dropna()
+        mutation_matrix = mutation_matrix.astype('bool')
+        n_dropped = len(variants_df['sample_id'].unique()) - len(mutation_matrix)
+        if n_dropped > 0:
+            print(f"Dropped {n_dropped} / {len(variants_df['sample_id'].unique())} samples with 1 or more missing loci in {" & ".join(genes)}.")
         
         ############################
-        # Add WT samples
+        # Identify WT samples
         ############################
-        ids_nonref = set(variants_df["sample_id"])
-
-        if ids_passed_QC is not None:
-            ids_ref = set(
-                ids_passed_QC.query("gene in @genes and sample_id not in @ids_nonref")[
-                    "sample_id"
-                ]
-            )
-        else:
-            ids_ref = all_ids - ids_nonref
-
         wt_category_name = "WT"
-
-        if len(ids_ref) > 0:
-            new_rows_df = pd.DataFrame(
-                False,
-                index=list(ids_ref),
-                columns=mutation_matrix.columns,
-            )
-
-            mutation_matrix[wt_category_name] = False
-            new_rows_df[wt_category_name] = True
-            mutation_matrix = pd.concat([mutation_matrix, new_rows_df])
+        bool_cols = mutation_matrix.select_dtypes(include='boolean').columns
+        mutation_matrix[wt_category_name] = ~mutation_matrix[bool_cols].any(axis=1)
+        if not mutation_matrix[wt_category_name].any():
+            mutation_matrix.drop(columns=wt_category_name, inplace=True)
         
         ############################
         # Handle empty/single-category
@@ -145,13 +127,16 @@ def upsetplot_fig(
                 transform=ax.transAxes,
             )
             ax.axis("off")
-
+        
         if combinations_only:
             unique_combo_muts = {mut for combo in combinations.values() for mut in combo}
-            drop_noncombo_cols = [f for f in mutation_matrix.columns if f not in unique_combo_muts ]
-            mutation_matrix.drop(columns=drop_noncombo_cols, inplace=True)
-            combo_sets = [set(c) for c in combinations.values()]
-            mutation_matrix = mutation_matrix.apply(filter_row, axis=1)
+            if len(unique_combo_muts) > 0:
+                drop_noncombo_cols = [f for f in mutation_matrix.columns if f not in unique_combo_muts ]
+                mutation_matrix.drop(columns=drop_noncombo_cols, inplace=True)
+                combo_sets = [set(c) for c in combinations.values()]
+                mutation_matrix = mutation_matrix.apply(filter_row, axis=1)
+            else:
+                print(f"No combinations defined for {" & ".join(genes)}. Ignoring combinations_only filter.")
 
         elif min_prevalence is not None:
             test_columns = ["_sub-threshold"]
@@ -344,7 +329,7 @@ def upsetplot_fig(
 
         if len(legend_names) > 0:
             handles, labels = ax.get_legend_handles_labels()
-            order = [labels.index(name) for name in combinations.keys() if name in labels]
+            order = [labels.index(name) for name in combinations if name in labels]
             handles = [handles[i] for i in order]
             labels = [labels[i] for i in order]
             fig.legend(handles, labels, loc="lower left", bbox_to_anchor=(1, 0.1))
