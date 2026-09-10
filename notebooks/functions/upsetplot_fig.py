@@ -77,7 +77,7 @@ def upsetplot_fig(
         # Filter variants
         ############################
         variants_df = variants_df[variants_df["gene"].isin(genes)].copy()
-        call_to_int = {'mutant': True, 'wt': False, 'mixed': True}
+        call_to_int = {'mutant': True, 'wt': False, 'mixed': True, 'absent': False}
         variants_df['aa_mut_pres'] = variants_df['aa_call'].map(call_to_int).astype('Int64')
         
         ############################
