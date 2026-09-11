@@ -1,0 +1,21 @@
+﻿full_name,three_letter_code,one_letter_code,side_chain,pka
+Alanine,Ala,A,Hydrophobic,
+Arginine,Arg,R,Positive,12.48
+Asparagine,Asn,N,Polar Uncharged,
+Aspartic acid,Asp,D,Negative,3.65
+Cysteine,Cys,C,Special,8.18
+Glutamic acid,Glu,E,Negative,4.25
+Glutamine,Gln,Q,Polar Uncharged,
+Glycine,Gly,G,Special,
+Histidine,His,H,Positive,6
+Isoleucine,Ile,I,Hydrophobic,
+Leucine,Leu,L,Hydrophobic,
+Lysine,Lys,K,Positive,10.53
+Methionine,Met,M,Hydrophobic,
+Phenylalanine,Phe,F,Hydrophobic,
+Proline,Pro,P,Special,
+Serine,Ser,S,Polar Uncharged,
+Threonine,Thr,T,Polar Uncharged,
+Tryptophan,Trp,W,Hydrophobic,
+Tyrosine,Tyr,Y,Hydrophobic,10.07
+Valine,Val,V,Hydrophobic,
