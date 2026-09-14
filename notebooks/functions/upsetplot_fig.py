@@ -89,9 +89,8 @@ def upsetplot_fig(
         mutation_matrix = variants_df.pivot(index='sample_id', columns='aa_change', values='aa_mut_pres')
         mutation_matrix = mutation_matrix.dropna()
         mutation_matrix = mutation_matrix.astype('bool')
-        n_dropped = len(variants_df['sample_id'].unique()) - len(mutation_matrix)
-        if n_dropped > 0:
-            print(f"Dropped {n_dropped} / {len(variants_df['sample_id'].unique())} samples with 1 or more missing loci in {" & ".join(genes)}.")
+        n_unique = len(variants_df['sample_id'].unique())
+        n_dropped = n_unique - len(mutation_matrix)
         
         ############################
         # Identify WT samples
@@ -346,8 +345,19 @@ def upsetplot_fig(
                 fontsize=8,
             )
 
+        if n_dropped > 0:
+            number = f"(n={len(mutation_matrix)} / {n_unique}*)"
+            fig.text(1,
+                     0,
+                     f"* {n_dropped} dropped as missing 1 or more loci",
+                     ha="left",
+                     fontsize=8,
+                    )
+
+        else:
+            number = f"(n={len(mutation_matrix)})"
         up_plot["intersections"].set_title(
-            f"{" & ".join(genes)}, (n={len(mutation_matrix)})",
+            f"{" & ".join(genes)} {number}",
             fontsize=16,
             pad=20,
         )

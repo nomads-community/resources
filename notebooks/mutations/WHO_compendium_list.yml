@@ -19,17 +19,19 @@
 #  mdr1:  Multidrug resistance gene 1
 #  pm2/3: Plasmepsin 2 and 3
 
+# Combinations are named as the gene(s)-num_mutations:aa_haplotype
+# e.g. dhfr-3:IRNI
+
 crt:
   validated: ["C72S","K76T", "A220S", "N326D", "I356L" ]
-  combinations:
-    0: ["C72S", "V73", "M74", "N75", "K76T"]
-    1: ["C72S", "K76T", "A220S", "N326D", "I356L"]
-    2: ["M74I", "N75E", "K76T", "A220S", "Q271E", "R371I"]
-    3: ["M74I", "N75E", "K76T", "A220S", "Q271E", "I356T", "R371I"]
-    4: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "R371I"]
-    5: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "I356T", "R371I"]
-    6: ["K76T", "A144T", "L160Y", "N326D"]
-
+  combinations: # Ref = CVMNK_AQNIR  (C72S, M74I, N75E, K76T _ A220S, Q271E, N326D, I356L, R371I)
+    crt_2:SVMNT : ["C72S", "K76T"]
+    crt_3:CVIET : ["M74I", "N75E", "K76T"]
+    crt_5:SVMNT_SQDLR:: ["C72S", "K76T", "A220S", "N326D", "I356L"]
+    crt_6:CVIET_SENII: ["M74I", "N75E", "K76T", "A220S", "Q271E", "R371I"]
+    crt_7:CVIET_SENLI: ["M74I", "N75E", "K76T", "A220S", "Q271E", "I356T", "R371I"]
+    crt_7:CVIET_SESII: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "R371I"]
+    crt_8:CVIET_SESTI: ["M74I", "N75E", "K76T", "A220S", "Q271E", "N326S", "I356T", "R371I"]
 
 kelch13:
   validated: ["F446I", "N458Y", "C469Y", "M476I", "Y493H", "G533S", "R539T", "I543T", "P553L", "R561H", "P574L", "C580Y", "R622I", "A675V"]
@@ -39,26 +41,38 @@ kelch13:
 dhfr:
   validated: ["N51I", "C59R", "S108N" ]
   candidate: ["I164L"]
-  combinations:
-    dhfr_triple: ["N51I", "C59R", "S108N"]
-    dhfr_quadruple: ["N51I", "C59R", "S108N", "I164L"]
+  combinations:  # Ref = NCSI (N51I, C59R, S108N, I164L)
+    dhfr_3:IRNI: ["N51I", "C59R", "S108N"]
+    dhfr_4:IRNL: ["N51I", "C59R", "S108N", "I164L"]
 
 dhps:
   validated: [ "A437G", "K540E", "A581G"]
-  combinations:
-    dhps_double:  ["A437G", "K540E"]
-    dhps_triple: [ "A437G", "K540E", "A581G"]
+  combinations: # Ref = ISAKAA (I431V, S436F, A437G, K540E, A581G, A613S)
+    dhps_2:ISGEAA:  ["A437G", "K540E"]
+    dhps_3:ISGEAA: [ "A437G", "K540E", "A581G"]
 
 mdr1:
   validated: ["N86Y"]
+  combinations: # Ref = SND
+    mdr1_3:CDY: ["S1034C", "N1042D", "D1246Y"]
 
 coronin:
   potential: ["G50E","R100K", "E107V"]
 
 multigene:
-  dhfr-dhps:
-    dhfr-dhps_3:NRNI-ISAEAA: ["dhfr-C59R", "dhfr-S108N", "dhps-K540E"]
+  dhfr-dhps: # Ref = NCSI-ISAKAA
+    dhfr-dhps_3:NRNI-IAAKAA: ["dhfr-C59R", "dhfr-S108N", "dhps-S436A"]
+    dhfr-dhps_3:NRNI-ISGKAA: ["dhfr-C59R", "dhfr-S108N", "dhps-S436G"]
     dhfr-dhps_4:ICNI-ISGEAA: ["dhfr-N51I", "dhfr-S108N", "dhps-A437G", "dhps-K540E"]
     dhfr-dhps_4:IRNI-ISGKAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G"]
     dhfr-dhps_5:IRNI-IAGKAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A", "dhps-A437G"]
     dhfr-dhps_5:IRNI-ISGEAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-K540E"]
+    dhfr-dhps_5:IRNI-ISGKGA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-A581G"]
+    dhfr-dhps_6:IRNI-IAGEAA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A","dhps-A437G", "dhps-K540E"]
+    dhfr-dhps_6:IRNI-ISGKGT: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-A581G",  "dhps-A613T"]
+    dhfr-dhps_6:IRNI-IAGKAS: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A","dhps-A437G", "dhps-A613S"]
+    dhfr-dhps_6:IRNI-IAGKGA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A","dhps-A437G", "dhps-A581G"]
+    dhfr-dhps_7:IRNI-ISGEGA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-K540E","dhps-A581G"]
+    dhfr-dhps_7:IRNI-IAGKGS: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-S436A","dhps-A437G", "dhps-A581G", "dhps-A613S"]
+    dhfr-dhps_7:IRNI-IAGEGA: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-A437G", "dhps-K540E","dhps-A581G", "dhps-S436A"]
+    dhfr-dhps_8:IRNI-VAGKGS: ["dhfr-N51I", "dhfr-C59R", "dhfr-S108N", "dhps-I143V", "dhps-S436A","dhps-A437G", "dhps-A581G", "dhps-S436A"]
