@@ -1,6 +1,7 @@
-# This is the key Path to get correct - everything else assumes standard nomadic data structure
+# All notebooks need to be passed workspace specific information. 
+
+# This variable sets the path to the nomadic workspace folder and is necessary for ALL workbooks. Edit the entry below and save as config.yaml in the same folder as this file.  
 workspace_dir: "~/Path_to_shared_folder/workspacename/"
 
-# List column name of category that you want to compare different sample subsets
-# e.g. enrolled_vs_failed column with empty (ignored), enrolled and failed entries.
+# Some workbooks make category comparisons by sample. List all columns in your dataset that you want to compare across your samples. You can add as many categories as you want or delete this option.
 categories: ["enrolled_vs_failed"]
