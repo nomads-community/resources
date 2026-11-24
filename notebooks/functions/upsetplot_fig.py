@@ -12,6 +12,7 @@ def upsetplot_fig(
     muts_dict: dict,
     min_prevalence: float | None = None,
     combinations_only: bool = False,
+    title_prefix: str | None = None,
 ) -> plt.Figure:
     """
     Generate an upset plot in a matplot figure based on the provided DataFrame and values column.
@@ -357,7 +358,7 @@ def upsetplot_fig(
         else:
             number = f"(n={len(mutation_matrix)})"
         up_plot["intersections"].set_title(
-            f"{" & ".join(genes)} {number}",
+            f"{title_prefix}{' & '.join(genes)} {number}" if title_prefix else f"{' & '.join(genes)} {number}",
             fontsize=16,
             pad=20,
         )
