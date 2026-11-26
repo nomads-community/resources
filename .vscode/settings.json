@@ -28,5 +28,8 @@
         "activityBarTop.activeBorder": "#15202b",
         "statusBar.inactiveBackground": "#eb5424"
     },
-    "peacock.color": "#eb5424"
+    "peacock.color": "#eb5424",
+    "python.analysis.extraPaths": [
+        "./notebooks/functions"
+    ]
 }
